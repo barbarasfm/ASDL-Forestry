@@ -1151,12 +1151,16 @@ with tab_sc:
                 wheel_debounce_time=150,   # ms between scroll events (less jumpy)
                 tiles=None,                # tile added manually below
             )
-            # Stadia Alidade Smooth Dark — dark basemap, crisp white labels,
+           # Stadia Alidade Smooth Dark — dark basemap, crisp white labels,
             # much better contrast than CartoDB Dark Matter
+            _stadia_key = os.environ.get("STADIA_API_KEY", "")
+            _stadia_url = (
+                f"https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{{z}}/{{x}}/{{y}}{{r}}.png"
+                + (f"?api_key={_stadia_key}" if _stadia_key else "")
+            )
             folium.TileLayer(
-                tiles="https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png",
+                tiles=_stadia_url,
                 attr='&copy; <a href="https://stadiamaps.com/">Stadia Maps</a> &copy; OpenMapTiles &copy; OpenStreetMap',
-                # name="Stadia Smooth Dark",
                 max_zoom=20,
                 opacity=1.0,               # full opacity for maximum contrast
             ).add_to(fmap)
