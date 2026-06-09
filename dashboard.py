@@ -1151,7 +1151,7 @@ with tab_sc:
                 wheel_debounce_time=150,   # ms between scroll events (less jumpy)
                 tiles=None,                # tile added manually below
             )
-           # Stadia Alidade Smooth Dark — dark basemap, crisp white labels,
+            # Stadia Alidade Smooth Dark — dark basemap, crisp white labels,
             # much better contrast than CartoDB Dark Matter
             _stadia_key = os.environ.get("STADIA_API_KEY", "")
             _stadia_url = (
@@ -1198,6 +1198,16 @@ with tab_sc:
                         _is_selected = _r["county_label"] in _sel
                         _base   = (5 + _intensity * 6) if _is_selected else (3 + _intensity * 4)
                         _radius = _base + _ring_offset
+                        # White selection ring drawn first (underneath)
+                        if _is_selected:
+                            folium.CircleMarker(
+                                location=[_r["lat"], _r["lon"]],
+                                radius=_radius + 4,
+                                color="#ffffff",
+                                fill=False,
+                                weight=1.5,
+                                opacity=0.7,
+                            ).add_to(fmap)
                         folium.CircleMarker(
                             location=[_r["lat"], _r["lon"]],
                             radius=_radius,
@@ -1207,7 +1217,7 @@ with tab_sc:
                             fill_opacity=0.85 if (_solid and _is_selected) else (0.70 if _solid else 0),
                             weight=4.0 if not _solid else (2.0 if _is_selected else 1.2),
                             tooltip=(f"<b>{_lbl}</b>: {_r['county_label']}<br>"
-                                     f"Supply: {_r[_col] * METRIC_TON_TO_US_TON:.2f}k dry US ton/yr<br>"
+                                     f"Supply: {_r[_col]:.2f}k odt/yr<br>"
                                      f"Distance: {_r['road_miles']:.0f} mi"),
                         ).add_to(fmap)
 
@@ -1270,15 +1280,13 @@ with tab_sc:
                 # ── Forest row: Total | Dist | HQ fraction (SAF only) ──────────
                 fr = results["forest"]
                 _f_dist_str  = f"{fr['dist_mi']:.1f} mi" if fr["dist_mi"] else "—"
-                _f_total_str = f"{fr['total_kdry']:.2f}" if fr["total_kdry"] else "—"
-                _hq_str      = f"{fr['hq_kdry']:.2f}" if IS_SAF else None
+                _f_total_str = f"{fr['total_kdry']:.2f}k" if fr["total_kdry"] else "—"
+                _hq_str      = f"{fr['hq_kdry']:.2f}k" if IS_SAF else None
 
                 # 3 cols in SAF (adds HQ card), 2 in Bioenergy
                 _f_cols = st.columns(3) if IS_SAF else st.columns(2)
                 with _f_cols[0]:
-                    _f_total_str_US_units = float(_f_total_str)*METRIC_TON_TO_US_TON
-                    _f_total_str_US_units_str = f"{_f_total_str_US_units:.1f}" 
-                    st.markdown(mc("Forest Total", _f_total_str_US_units_str, "k dry US ton/yr"),
+                    st.markdown(mc("Forest Total", _f_total_str, "k metric dry t/yr"),
                                 unsafe_allow_html=True)
                 with _f_cols[1]:
                     st.markdown(mc("Forest Dist", _f_dist_str, "weighted avg mi"),
@@ -1286,21 +1294,17 @@ with tab_sc:
                 if IS_SAF and len(_f_cols) > 2:
                     with _f_cols[2]:
                         # HQ card immediately next to forest total/dist
-                        _hq_str_US_units = float(_hq_str)*METRIC_TON_TO_US_TON
-                        _hq_str_US_units_str = f"{_hq_str_US_units:.1f}"
-                        st.markdown(mc("Forest HQ (69.2%)", _hq_str_US_units_str,
-                                       "k dry US ton/yr usable for SAF"),
+                        st.markdown(mc("Forest HQ (69.2%)", _hq_str,
+                                       "k metric dry t/yr usable for SAF"),
                                     unsafe_allow_html=True)
 
                 # ── Mill residue row ──────────────────────────────────────────
                 mr = results["mill"]
                 _mr_dist_str  = f"{mr['dist_mi']:.1f} mi" if mr["dist_mi"] else "—"
-                _mr_total_str = f"{mr['total_kdry']:.2f}" if mr["total_kdry"] else "—"
+                _mr_total_str = f"{mr['total_kdry']:.2f}k" if mr["total_kdry"] else "—"
                 _m_cols = st.columns(2)
                 with _m_cols[0]:
-                    _mr_total_str_US_units = float(_mr_total_str)*METRIC_TON_TO_US_TON
-                    _mr_total_str_US_units_str = f"{_mr_total_str_US_units:.1f}"
-                    st.markdown(mc("Mill Total", _mr_total_str_US_units_str, "k dry US ton/yr",
+                    st.markdown(mc("Mill Total", _mr_total_str, "k metric dry t/yr",
                                    "mc-amber"), unsafe_allow_html=True)
                 with _m_cols[1]:
                     st.markdown(mc("Mill Dist", _mr_dist_str, "weighted avg mi",
@@ -1310,12 +1314,10 @@ with tab_sc:
                 if IS_SAF and "pulpwood" in results:
                     pr = results["pulpwood"]
                     _pr_dist_str  = f"{pr['dist_mi']:.1f} mi" if pr["dist_mi"] else "—"
-                    _pr_total_str = f"{pr['total_kdry']:.2f}" if pr["total_kdry"] else "—"
+                    _pr_total_str = f"{pr['total_kdry']:.2f}k" if pr["total_kdry"] else "—"
                     _p_cols = st.columns(2)
                     with _p_cols[0]:
-                        _pr_total_str_US_units = float(_pr_total_str)*METRIC_TON_TO_US_TON
-                        _pr_total_str_US_units_str = f"{_pr_total_str_US_units:.1f}"
-                        st.markdown(mc("Pulpwood Total", _pr_total_str_US_units_str, "k dry US ton/yr",
+                        st.markdown(mc("Pulpwood Total", _pr_total_str, "k metric dry t/yr",
                                        "mc-blue"), unsafe_allow_html=True)
                     with _p_cols[1]:
                         st.markdown(mc("Pulpwood Dist", _pr_dist_str, "weighted avg mi",
